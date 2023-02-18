@@ -29,6 +29,17 @@ local function showRadial(id)
 
     currentRadial = radial
 
+    -- Hide current menu and allow for transition
+    SendNUIMessage({
+        action = 'openRadialMenu',
+        data = false
+    })
+
+    Wait(100)
+
+    -- If menu was closed during transition, don't open the submenu
+    if not isOpen then return end
+
     SendNUIMessage({
         action = 'openRadialMenu',
         data = {
@@ -138,7 +149,11 @@ lib.addKeybind({
     description = 'Open radial menu',
     defaultKey = 'z',
     onPressed = function()
-        if isOpen or #menuItems == 0 or IsNuiFocused() or IsPauseMenuActive() then return end
+        if isOpen then
+            return lib.hideRadial()
+        end
+
+        if #menuItems == 0 or IsNuiFocused() or IsPauseMenuActive() then return end
 
         isOpen = true
 
@@ -159,7 +174,7 @@ lib.addKeybind({
             Wait(0)
         end
     end,
-    onReleased = lib.hideRadial,
+    -- onReleased = lib.hideRadial,
 })
 
 AddEventHandler('onClientResourceStop', function(resource)
