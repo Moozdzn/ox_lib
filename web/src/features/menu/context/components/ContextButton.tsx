@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ReactMarkdown from 'react-markdown';
 import { Option, ContextMenuProps } from '../../../../typings';
 import { fetchNui } from '../../../../utils/fetchNui';
+import SearchInput from './SearchInput';
 
 const openMenu = (id: string | undefined) => {
   fetchNui<ContextMenuProps>('openContext', { id: id, back: false });
@@ -36,7 +37,9 @@ const useStyles = createStyles((theme, params: { disabled?: boolean }) => ({
 
 const ContextButton: React.FC<{
   option: [string, Option];
-}> = ({ option }) => {
+  handleChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  search?: string;
+}> = ({ option, handleChange, search }) => {
   const button = option[1];
   const buttonKey = option[0];
   const { classes } = useStyles({ disabled: button.disabled });
@@ -67,7 +70,11 @@ const ContextButton: React.FC<{
                     </Stack>
                   )}
                   <Text sx={{ overflowWrap: 'break-word' }}>
-                    <ReactMarkdown>{button.title || buttonKey}</ReactMarkdown>
+                    {button.type === 'search' && handleChange && search !== undefined ? (
+                      <SearchInput option={option} handleChange={handleChange} search={search} />
+                    ) : (
+                      <ReactMarkdown>{button.title || buttonKey}</ReactMarkdown>
+                    )}
                   </Text>
                 </Group>
                 {button.description && (

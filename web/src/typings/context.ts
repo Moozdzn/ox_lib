@@ -15,6 +15,8 @@ export interface Option {
   event?: string;
   serverEvent?: string;
   args?: any;
+  type?: 'search';
+  placeholder?: string;
 }
 
 export interface Options {

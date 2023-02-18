@@ -18,6 +18,28 @@ const ContextMenu: React.FC = () => {
     title: '',
     options: { '': { description: '', metadata: [] } },
   });
+  const [search, setSearch] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const filteredOptions = Object.entries(contextMenu.options).filter(
+    ([key, option]) => {
+      if (option.type === 'search' || search === '') {
+        return true;
+      } else {
+        let match = false;
+        if (option.title) {
+          match = option.title.toLowerCase().includes(search.toLowerCase());
+        }
+        if (option.description) {
+          match = match || option.description.toLowerCase().includes(search.toLowerCase());
+        }
+        return match;
+      }
+    }
+  );
 
   const closeContext = () => {
     if (contextMenu.canClose === false) return;
@@ -65,9 +87,12 @@ const ContextMenu: React.FC = () => {
         </Flex>
         <Box sx={{ height: 560, overflowY: 'scroll' }}>
           <Stack spacing={3}>
-            {Object.entries(contextMenu.options).map((option, index) => (
-              <ContextButton option={option} key={`context-item-${index}`} />
-            ))}
+            {filteredOptions.map((option, index) => {
+              const isSearch = option[1].type === 'search';
+              return isSearch ? 
+                <ContextButton option={option} key={`context-item-${index}`} handleChange={handleChange} search={search}/> : 
+                <ContextButton option={option} key={`context-item-${index}`} />
+            })}
           </Stack>
         </Box>
       </ScaleFade>

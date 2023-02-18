@@ -1,4 +1,5 @@
 local glm = require 'glm'
+local debug = false
 
 ---@class CZone
 ---@field id number
@@ -13,6 +14,21 @@ local glm = require 'glm'
 
 ---@type { [number]: CZone }
 Zones = {}
+
+local function DrawText3D(x, y, z, text)
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextProportional(true)
+    SetTextColour(255, 255, 255, 215)
+    BeginTextCommandDisplayText("STRING")
+    SetTextCentre(true)
+    AddTextComponentSubstringPlayerName(text)
+    SetDrawOrigin(x,y,z, 0)
+    EndTextCommandDisplayText(0.0, 0.0)
+    local factor = (string.len(text)) / 370
+    DrawRect(0.0, 0.0+0.0125, 0.017+ factor, 0.03, 0, 0, 0, 75)
+    ClearDrawOrigin()
+end
 
 local function nextFreePoint(points, b, len)
     for i = 1, len do
@@ -180,13 +196,15 @@ CreateThread(function()
             if next(insideZones) then
                 tick = SetInterval(function()
                     for _, zone in pairs(insideZones) do
-                        if zone.debug then
+                        if debug and (zone.distance < 50.0 or zone.insideZone) then
+                        --[[ if zone.debug then ]]
                             zone:debug()
+                            DrawText3D(zone.coords.x, zone.coords.y, zone.coords.z, zone.name or zone.id)
 
                             if zone.inside and zone.insideZone then
                                 zone:inside()
                             end
-                        else
+                        elseif zone.inside and zone.insideZone then
                             zone:inside()
                         end
                     end
@@ -325,10 +343,10 @@ lib.zones = {
         data.remove = removeZone
         data.contains = contains
 
-        if data.debug then
+        --if data.debug then
             data.triangles = getTriangles(data.polygon)
             data.debug = debugPoly
-        end
+        --end
 
         Zones[data.id] = data
         return data
@@ -350,9 +368,30 @@ lib.zones = {
         data.remove = removeZone
         data.contains = contains
 
-        if data.debug then
+        --if data.debug then
             data.triangles = { mat(data.polygon[1], data.polygon[2], data.polygon[3]), mat(data.polygon[1], data.polygon[3], data.polygon[4]) }
             data.debug = debugPoly
+        --end
+
+        data.update = function (self, new_data)
+            if new_data.coords then
+                self.coords = convertToVector(new_data.coords)
+            end
+            if new_data.size then
+                self.size = convertToVector(new_data.size) / 2
+            end
+            if new_data.rotation then
+                self.rotation = quat(new_data.rotation, vec3(0, 0, 1))
+            end
+            self.polygon = (self.rotation * glm.polygon.new({
+                vec3(self.size.x, self.size.y, 0),
+                vec3(-self.size.x, self.size.y, 0),
+                vec3(-self.size.x, -self.size.y, 0),
+                vec3(self.size.x, -self.size.y, 0),
+            }) + self.coords)
+            if self.debug then
+                self.triangles = { mat(self.polygon[1], self.polygon[2], self.polygon[3]), mat(self.polygon[1], self.polygon[3], self.polygon[4]) }
+            end
         end
 
         Zones[data.id] = data
@@ -367,13 +406,21 @@ lib.zones = {
         data.remove = removeZone
         data.contains = insideSphere
 
-        if data.debug then
+        --if data.debug then
             data.debug = debugSphere
-        end
+        --end
 
         Zones[data.id] = data
         return data
     end,
+
+    debug = function ()
+        debug = not debug
+    end
 }
+
+AddEventHandler('polyzone:debug', function ()
+    lib.zones.debug()
+end)
 
 return lib.zones
