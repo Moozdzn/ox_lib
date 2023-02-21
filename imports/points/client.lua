@@ -24,6 +24,8 @@ local function removePoint(self)
 	points[self.id] = nil
 end
 
+local currentResource = GetCurrentResourceName()
+
 CreateThread(function()
 	while true do
         if nearbyCount ~= 0 then
@@ -71,19 +73,29 @@ CreateThread(function()
 			end
 		end
 
-		if not tick then
-			if nearbyCount ~= 0 then
-				tick = SetInterval(function()
-					for i = 1, nearbyCount do
-                        local point = nearbyPoints[i]
+		local shouldTick = true
 
-                        if point then
-                            point:nearby()
-                        end
-					end
-				end)
+		if currentResource == "altf4-interact" then
+			shouldTick = IsTargetActive()
+		end
+
+		if shouldTick then
+			if not tick then
+				if nearbyCount ~= 0 then
+					tick = SetInterval(function()
+						for i = 1, nearbyCount do
+							local point = nearbyPoints[i]
+	
+							if point then
+								point:nearby()
+							end
+						end
+					end)
+				end
+			elseif nearbyCount == 0 then
+				tick = ClearInterval(tick)
 			end
-		elseif nearbyCount == 0 then
+		elseif tick then
 			tick = ClearInterval(tick)
 		end
 

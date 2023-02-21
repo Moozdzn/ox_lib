@@ -121,6 +121,8 @@ local function removeZone(self)
     exitingZones[self.id] = nil
 end
 
+local currentResource = GetCurrentResourceName()
+
 CreateThread(function()
     while true do
         local coords = GetEntityCoords(cache.ped)
@@ -192,28 +194,37 @@ CreateThread(function()
             table.wipe(enteringZones)
         end
 
-        if not tick then
-            if next(insideZones) then
-                tick = SetInterval(function()
-                    for _, zone in pairs(insideZones) do
-                        if debug and (zone.distance < 50.0 or zone.insideZone) then
-                        --[[ if zone.debug then ]]
-                            zone:debug()
-                            DrawText3D(zone.coords.x, zone.coords.y, zone.coords.z, zone.name or zone.id)
+        local shouldTick = true
 
-                            if zone.inside and zone.insideZone then
+		if currentResource == "altf4-interact" then
+			shouldTick = IsTargetActive()
+		end
+
+        if shouldTick then
+			if not tick then
+                if next(insideZones) then
+                    tick = SetInterval(function()
+                        for _, zone in pairs(insideZones) do
+                            if debug and (zone.distance < 50.0 or zone.insideZone) then
+                            --[[ if zone.debug then ]]
+                                zone:debug()
+                                DrawText3D(zone.coords.x, zone.coords.y, zone.coords.z, zone.name or zone.id)
+    
+                                if zone.inside and zone.insideZone then
+                                    zone:inside()
+                                end
+                            elseif zone.inside and zone.insideZone then
                                 zone:inside()
                             end
-                        elseif zone.inside and zone.insideZone then
-                            zone:inside()
                         end
-                    end
-                end)
+                    end)
+                end
+            elseif not next(insideZones) then
+                tick = ClearInterval(tick)
             end
-        elseif not next(insideZones) then
-            tick = ClearInterval(tick)
-        end
-
+        elseif tick then
+			tick = ClearInterval(tick)
+		end
         Wait(300)
     end
 end)
