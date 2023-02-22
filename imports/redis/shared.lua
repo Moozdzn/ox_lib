@@ -1,9 +1,11 @@
+lib.redis = {}
+
 --- Creates a new cache object
 --- @param refresh_fn fun(...): any The function to call to refresh the cache
 --- @param ttl number? time to live in ms
 --- @param cacheImmediately boolean? whether to cache immediately or not
 --- @return table cache Retrieve the value with cache.value
-function lib.redis(refresh_fn, ttl, cacheImmediately)
+function lib.redis.new(refresh_fn, ttl, cacheImmediately)
     if not refresh_fn then
         error("No callback function provided")
     end
