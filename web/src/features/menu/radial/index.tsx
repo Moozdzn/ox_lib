@@ -1,10 +1,11 @@
 import { Box, createStyles } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNuiEvent } from '../../../hooks/useNuiEvent';
 import { fetchNui } from '../../../utils/fetchNui';
 import ScaleFade from '../../../transitions/ScaleFade';
 import type { RadialMenuItem } from '../../../typings';
+import { useLocales } from '../../../providers/LocaleProvider';
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -19,7 +20,6 @@ const useStyles = createStyles((theme) => ({
 
     '&:hover': {
       fill: theme.fn.primaryColor(),
-      cursor: 'pointer',
       '> g > text, > g > svg > path': {
         fill: '#fff',
       },
@@ -38,7 +38,6 @@ const useStyles = createStyles((theme) => ({
     strokeWidth: 4,
     '&:hover': {
       fill: theme.colors[theme.primaryColor][theme.fn.primaryShade() - 1],
-      cursor: 'pointer',
     },
   },
   centerIconContainer: {
@@ -53,44 +52,42 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
+// PAGE_ITEMS + 1 = More... button
+const PAGE_ITEMS = 7;
+
 const degToRad = (deg: number) => deg * (Math.PI / 180);
 const MAX_ITEMS = 6;
 
 const RadialMenu: React.FC = () => {
   const { classes } = useStyles();
+  const { locale } = useLocales();
   const [visible, setVisible] = useState(false);
-  const [menu, setMenu] = useState<{ items: RadialMenuItem[]; sub?: boolean }>({
+  const [menuItems, setMenuItems] = useState<RadialMenuItem[]>([]);
+  const [menu, setMenu] = useState<{ items: RadialMenuItem[]; sub?: boolean; page: number }>({
     items: [],
     sub: false,
+    page: 1,
   });
 
-  const [moreMenuIndex, setMoreMenuIndex] = useState(0);
+  const changePage = async (increment?: boolean) => {
+    setVisible(false);
+    // May cause issues if user toggles off the menu while in transition?
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    setVisible(true);
+    setMenu({ ...menu, page: increment ? menu.page + 1 : menu.page - 1 });
+  };
 
-  let moreMenus: Array<RadialMenuItem[]> = [];
-
-  if (menu.items.length > MAX_ITEMS) {
-    const nrMenus = Math.ceil(menu.items.length / MAX_ITEMS);
-
-    for (let i = 0; i < nrMenus; i++) {
-      moreMenus[i] = menu.items.slice(i * MAX_ITEMS, i * MAX_ITEMS + MAX_ITEMS);
-      if (i < nrMenus - 1) {
-        moreMenus[i].push({
-          label: 'More',
-          icon: 'ellipsis-h',
-        });
-      }
-    }
-  } else {
-    moreMenus[moreMenuIndex] = menu.items;
-  }
+  useEffect(() => {
+    if (menu.items.length < PAGE_ITEMS) return setMenuItems(menu.items);
+    const items = menu.items.slice(PAGE_ITEMS * (menu.page - 1), PAGE_ITEMS * menu.page);
+    PAGE_ITEMS * menu.page < menu.items.length &&
+      items.push({ icon: 'ellipsis-h', label: locale.ui.more, isMore: true });
+    setMenuItems(items);
+  }, [menu.items, menu.page]);
 
   useNuiEvent('openRadialMenu', async (data: { items: RadialMenuItem[]; sub?: boolean } | false) => {
     if (!data) return setVisible(false);
-    // if (visible) {
-    //   setVisible(false);
-    //   await new Promise((resolve) => setTimeout(resolve, 100));
-    // }
-    setMenu(data);
+    setMenu({ ...data, page: 1 });
     setVisible(true);
     setMoreMenuIndex(0);
   });
@@ -101,21 +98,27 @@ const RadialMenu: React.FC = () => {
 
   return (
     <>
-      <Box className={classes.wrapper} onContextMenu={() => moreMenuIndex > 0 && setMoreMenuIndex(moreMenuIndex - 1) || menu.sub && fetchNui('radialBack')}>
+      <Box
+        className={classes.wrapper}
+        onContextMenu={async () => {
+          if (menu.page > 1) await changePage();
+          else if (menu.sub) fetchNui('radialBack');
+        }}
+      >
         <ScaleFade visible={visible}>
           <svg width="350px" height="350px" transform="rotate(90)">
             {/*Fixed issues with background circle extending the circle when there's less than 3 items*/}
             <g transform="translate(175, 175)">
               <circle r={175} className={classes.backgroundCircle} />
             </g>
-            {moreMenus[moreMenuIndex].map((item, index) => {
+            {menuItems.map((item, index) => {
               // Always draw full circle to avoid elipse circles with 2 or less items
-              const pieAngle = 360 / (moreMenus[moreMenuIndex].length < 3 ? 3 : moreMenus[moreMenuIndex].length);
+              const pieAngle = 360 / (menuItems.length < 3 ? 3 : menuItems.length);
               const angle = degToRad(pieAngle / 2 + 90);
-              const gap = 0
+              const gap = 0;
               const radius = 175 * 0.65 - gap;
-              const sinAngle = Math.sin(angle)
-              const cosAngle = Math.cos(angle)
+              const sinAngle = Math.sin(angle);
+              const cosAngle = Math.cos(angle);
               const iconX = 175 + sinAngle * radius;
               const iconY = 175 + cosAngle * radius;
 
@@ -124,21 +127,18 @@ const RadialMenu: React.FC = () => {
                   <g
                     transform={`rotate(-${index * pieAngle} 175 175) translate(${sinAngle * gap}, ${cosAngle * gap})`}
                     className={classes.sector}
-                    onClick={() => {
-                      {/*Checks for extra menus and if index is the last option (where the "more" button is and if there is next menu*/}
-                      if (moreMenus.length > 0 && index === moreMenus[moreMenuIndex].length - 1 && moreMenuIndex < moreMenus.length - 1) {
-                        setMoreMenuIndex(moreMenuIndex + 1);
-                      } else {
-                        {/*convert index back to original index*/}
-                        const originalIndex = moreMenuIndex * MAX_ITEMS + index;
-                        fetchNui('radialClick', originalIndex)
+                    onClick={async () => {
+                      const clickIndex = menu.page === 1 ? index : PAGE_ITEMS * (menu.page - 1) + index;
+                      if (!item.isMore) fetchNui('radialClick', clickIndex);
+                      else {
+                        await changePage(true);
                       }
                     }}
                   >
                     <path
-                      d={`M175.01,175.01 l${175 - gap},0 A175.01,175.01 0 0,0 ${175 + (175 - gap) * Math.cos(-degToRad(pieAngle))}, ${
-                        175 + (175 - gap) * Math.sin(-degToRad(pieAngle))
-                      } z`}
+                      d={`M175.01,175.01 l${175 - gap},0 A175.01,175.01 0 0,0 ${
+                        175 + (175 - gap) * Math.cos(-degToRad(pieAngle))
+                      }, ${175 + (175 - gap) * Math.sin(-degToRad(pieAngle))} z`}
                     />
                     <g transform={`rotate(${index * pieAngle - 90} ${iconX} ${iconY})`} pointerEvents="none">
                       <FontAwesomeIcon
@@ -159,14 +159,14 @@ const RadialMenu: React.FC = () => {
             })}
             <g
               transform={`translate(175, 175)`}
-              onClick={() => {
-                if (moreMenuIndex > 0) 
-                  setMoreMenuIndex(moreMenuIndex - 1)
-                else if (menu.sub) 
-                  fetchNui('radialBack')
+              onClick={async () => {
+                if (menu.page > 1) await changePage();
                 else {
-                  setVisible(false);
-                  fetchNui('radialClose');
+                  if (menu.sub) fetchNui('radialBack');
+                  else {
+                    setVisible(false);
+                    fetchNui('radialClose');
+                  }
                 }
               }}
             >
@@ -175,7 +175,7 @@ const RadialMenu: React.FC = () => {
           </svg>
           <div className={classes.centerIconContainer}>
             <FontAwesomeIcon
-              icon={menu.sub || moreMenuIndex > 0 ? 'arrow-rotate-left' : 'xmark'}
+              icon={!menu.sub && menu.page < 2 ? 'xmark' : 'arrow-rotate-left'}
               fixedWidth
               className={classes.centerIcon}
               color="#fff"
