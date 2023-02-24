@@ -89,7 +89,6 @@ const RadialMenu: React.FC = () => {
     if (!data) return setVisible(false);
     setMenu({ ...data, page: 1 });
     setVisible(true);
-    setMoreMenuIndex(0);
   });
 
   useNuiEvent('refreshItems', (data: RadialMenuItem[]) => {
