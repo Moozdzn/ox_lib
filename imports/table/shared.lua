@@ -72,6 +72,18 @@ local function table_merge(t1, t2)
 end
 table.merge = table_merge
 
+local function table_count(tbl)
+	if table.type(tbl) == "array" then
+		return #tbl
+	end
+	local count = 0
+	for _ in pairs(tbl) do
+		count += 1
+	end
+	return count
+end
+table.count = table_count
+
 lib.table = table
 
 return table
