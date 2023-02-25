@@ -3,10 +3,8 @@
 ---@field icon string
 ---@field label string
 ---@field menu? string
----@field onSelect? fun(args: any)
----@field event? string
----@field serverEvent? string
----@field args? any
+---@field onSelect? function
+---@field [string] any
 
 ---@class RadialMenuProps
 ---@field id string
@@ -26,8 +24,11 @@ local menuHistory = {}
 ---@type RadialMenuProps?
 local currentRadial = nil
 
----Open a registered radial submenu with the given id.
----@param id string
+---@type number | nil
+local menuPage = nil
+
+---Open a the global radial menu or a registered radial submenu with the given id.
+---@param id string?
 local function showRadial(id)
     local radial = id and menus[id]
 
@@ -51,7 +52,7 @@ local function showRadial(id)
     SendNUIMessage({
         action = 'openRadialMenu',
         data = {
-            items = radial?.items or menuItems,
+            items = radial and radial.items or menuItems,
             sub = radial and true or nil
         }
     })
@@ -115,7 +116,7 @@ function lib.hideRadial()
 
     SendNUIMessage({
         action = 'openRadialMenu',
-        data = false
+        data = menuPage or false
     })
 
     SetNuiFocus(false, false)
@@ -231,8 +232,11 @@ lib.addKeybind({
     defaultKey = 'z',
     onPressed = function()
         if isOpen then
+            menuPage = 1
             return lib.hideRadial()
         end
+        
+        menuPage = nil
 
         if #menuItems == 0 or IsNuiFocused() or IsPauseMenuActive() then return end
 
