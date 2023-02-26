@@ -69,6 +69,7 @@ const ContextMenu: React.FC = () => {
     }
     setContextMenu(data);
     setVisible(true);
+    setSearch('');
   });
 
   return (
