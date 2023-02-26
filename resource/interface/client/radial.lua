@@ -3,12 +3,13 @@
 ---@field icon string
 ---@field label string
 ---@field menu? string
----@field onSelect? function
+---@field onSelect? fun(currentMenu: string | nil, itemIndex: number) | string
 ---@field [string] any
 
 ---@class RadialMenuProps
 ---@field id string
 ---@field items RadialMenuItem[]
+---@field [string] any
 
 local isOpen = false
 
@@ -23,9 +24,6 @@ local menuHistory = {}
 
 ---@type RadialMenuProps?
 local currentRadial = nil
-
----@type number | nil
-local menuPage = nil
 
 ---Open a the global radial menu or a registered radial submenu with the given id.
 ---@param id string?
@@ -101,6 +99,7 @@ end
 ---@param radial RadialMenuProps
 function lib.registerRadial(radial)
     menus[radial.id] = radial
+    radial.resource = GetInvokingResource()
 
     if currentRadial then
         refreshRadial(radial.id)
@@ -116,7 +115,7 @@ function lib.hideRadial()
 
     SendNUIMessage({
         action = 'openRadialMenu',
-        data = menuPage or false
+        data = false
     })
 
     SetNuiFocus(false, false)
@@ -171,7 +170,15 @@ end
 RegisterNUICallback('radialClick', function(index, cb)
     cb(1)
 
-    local item = (currentRadial and currentRadial.items or menuItems)[index + 1]
+    local itemIndex = index + 1
+    local item, currentMenu
+
+    if currentRadial then
+        item = currentRadial.items[itemIndex]
+        currentMenu = currentRadial.id
+    else
+        item = menuItems[itemIndex]
+    end
 
     if item.menu then
         if currentRadial then
@@ -183,7 +190,15 @@ RegisterNUICallback('radialClick', function(index, cb)
         lib.hideRadial()
     end
 
-    if item.onSelect then item.onSelect() end
+    local onSelect = item.onSelect
+
+    if onSelect then
+        if type(onSelect) == 'string' then
+            return exports[currentRadial and currentRadial.resource or item.resource][onSelect](0, currentMenu, itemIndex)
+        end
+
+        onSelect(currentMenu, itemIndex)
+    end
 end)
 
 RegisterNUICallback('radialBack', function(_, cb)
@@ -207,6 +222,9 @@ RegisterNUICallback('radialBack', function(_, cb)
 
     Wait(100)
 
+    -- If menu was closed during transition, don't open the submenu
+    if not isOpen then return end
+
     SendNUIMessage({
         action = 'openRadialMenu',
         data = {
@@ -226,17 +244,23 @@ RegisterNUICallback('radialClose', function(_, cb)
     currentRadial = nil
 end)
 
+RegisterNUICallback('radialTransition', function(_, cb)
+    Wait(100)
+
+    -- If menu was closed during transition, don't open the submenu
+    if not isOpen then return cb(false) end
+
+    cb(true)
+end)
+
 lib.addKeybind({
     name = 'ox_lib-radial',
     description = 'Open radial menu',
     defaultKey = 'z',
     onPressed = function()
         if isOpen then
-            menuPage = 1
             return lib.hideRadial()
         end
-        
-        menuPage = nil
 
         if #menuItems == 0 or IsNuiFocused() or IsPauseMenuActive() then return end
 
