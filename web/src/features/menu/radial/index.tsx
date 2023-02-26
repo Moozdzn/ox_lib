@@ -16,25 +16,32 @@ const useStyles = createStyles((theme) => ({
   },
   sector: {
     fill: theme.colors.dark[6],
+    fillOpacity: 0.3,
     color: theme.colors.dark[0],
 
     '&:hover': {
       fill: theme.fn.primaryColor(),
+      fillOpacity: 0.6,
       '> g > text, > g > svg > path': {
         fill: '#fff',
       },
     },
     '> g > text': {
-      fill: theme.colors.dark[0],
     },
+  },
+  content: {
+    fill: theme.colors.dark[0],
+    fillOpacity: 1
   },
   backgroundCircle: {
     fill: theme.colors.dark[6],
+    fillOpacity: 0.4,
   },
   centerCircle: {
     fill: theme.fn.primaryColor(),
     color: '#fff',
     stroke: theme.colors.dark[6],
+    strokeOpacity: 0.4,
     strokeWidth: 4,
     '&:hover': {
       fill: theme.colors[theme.primaryColor][theme.fn.primaryShade() - 1],
@@ -56,7 +63,6 @@ const useStyles = createStyles((theme) => ({
 const PAGE_ITEMS = 7;
 
 const degToRad = (deg: number) => deg * (Math.PI / 180);
-const MAX_ITEMS = 6;
 
 const RadialMenu: React.FC = () => {
   const { classes } = useStyles();
@@ -150,8 +156,9 @@ const RadialMenu: React.FC = () => {
                         width={25}
                         height={25}
                         fixedWidth
+                        className={classes.content}
                       />
-                      <text x={iconX} y={iconY + 25} fill="#fff" textAnchor="middle" pointerEvents="none">
+                      <text x={iconX} y={iconY + 25} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
                         {item.label}
                       </text>
                     </g>
