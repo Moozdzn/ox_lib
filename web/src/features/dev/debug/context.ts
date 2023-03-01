@@ -16,6 +16,7 @@ export const debugContext = () => {
           { title: 'Empty button' },
           {
             title: 'Karin Kuruma',
+            icon: 'https://cdn4.iconfinder.com/data/icons/social-media-logos-6/512/12-vlc_media_player-512.png',
             image: 'https://cdn.discordapp.com/attachments/1063098499027173461/1064276343585505330/screenshot.jpg',
             arrow: true,
             colorScheme: 'blue',

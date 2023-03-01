@@ -4,8 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { Option, ContextMenuProps } from '../../../../typings';
 import { fetchNui } from '../../../../utils/fetchNui';
 import SearchInput from './SearchInput';
-import { isIconUrl } from '../../../../utils/isIconUrl';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import Icon from '../../../../providers/IconProvider';
 
 const openMenu = (id: string | undefined) => {
   fetchNui<ContextMenuProps>('openContext', { id: id, back: false });
@@ -71,16 +70,7 @@ const ContextButton: React.FC<{
                 <Group spacing={8} noWrap>
                   {button?.icon && (
                     <Stack w={25} h={25} justify="center" align="center">
-                      {typeof button.icon === 'string' && isIconUrl(button.icon) ? (
-                        <img src={button.icon} className={classes.iconImage} alt="Missing img" />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={button.icon as IconProp}
-                          fixedWidth
-                          size="lg"
-                          style={{ color: button.iconColor }}
-                        />
-                      )}
+                      <Icon icon={button.icon} color={button.iconColor} size="lg" imageClass={classes.iconImage}></Icon>
                     </Stack>
                   )}
                   <Text sx={{ overflowWrap: 'break-word' }}>

@@ -4,8 +4,7 @@ import React, { forwardRef } from 'react';
 import CustomCheckbox from './CustomCheckbox';
 import type { MenuItem } from '../../../typings';
 import { createStyles } from '@mantine/core';
-import { isIconUrl } from '../../../utils/isIconUrl';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import Icon from '../../../providers/IconProvider';
 
 interface Props {
   item: MenuItem;
@@ -14,7 +13,7 @@ interface Props {
   checked: boolean;
 }
 
-const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
+const useStyles = createStyles((theme) => ({
   buttonContainer: {
     backgroundColor: theme.colors.dark[6],
     borderRadius: theme.radius.md,
@@ -39,10 +38,6 @@ const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
     alignItems: 'center',
     width: 32,
     height: 32,
-  },
-  icon: {
-    fontSize: 24,
-    color: params.iconColor || theme.colors.dark[2],
   },
   label: {
     color: theme.colors.dark[2],
@@ -70,7 +65,7 @@ const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
 }));
 
 const ListItem = forwardRef<Array<HTMLDivElement | null>, Props>(({ item, index, scrollIndex, checked }, ref) => {
-  const { classes } = useStyles({ iconColor: item.iconColor });
+  const { classes } = useStyles();
 
   return (
     <Box
@@ -86,11 +81,7 @@ const ListItem = forwardRef<Array<HTMLDivElement | null>, Props>(({ item, index,
       <Group spacing={15} noWrap className={classes.buttonWrapper}>
         {item.icon && (
           <Box className={classes.iconContainer}>
-            {typeof item.icon === 'string' && isIconUrl(item.icon) ? (
-              <img src={item.icon} alt="Missing image" className={classes.iconImage} />
-            ) : (
-              <FontAwesomeIcon icon={item.icon as IconProp} className={classes.icon} fixedWidth />
-            )}
+            <Icon icon={item.icon} imageClass={classes.iconImage} size={'xl'} />
           </Box>
         )}
         {Array.isArray(item.values) ? (

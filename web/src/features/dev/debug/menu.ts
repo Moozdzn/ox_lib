@@ -12,7 +12,7 @@ export const debugMenu = () => {
           { label: 'Option 1', icon: 'heart' },
           {
             label: 'Option 2',
-            icon: 'basket-shopping',
+            icon: 'https://cdn4.iconfinder.com/data/icons/social-media-logos-6/512/12-vlc_media_player-512.png',
             description: 'Tooltip description 1',
             checked: true,
           },

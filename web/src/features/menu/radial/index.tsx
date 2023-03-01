@@ -6,6 +6,8 @@ import { fetchNui } from '../../../utils/fetchNui';
 import ScaleFade from '../../../transitions/ScaleFade';
 import type { RadialMenuItem } from '../../../typings';
 import { useLocales } from '../../../providers/LocaleProvider';
+import Icon from '../../../providers/IconProvider';
+import { theme } from '../../../theme';
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -153,14 +155,15 @@ const RadialMenu: React.FC = () => {
                       }, ${175 + (175 - gap) * Math.sin(-degToRad(pieAngle))} z`}
                     />
                     <g transform={`rotate(${index * pieAngle - 90} ${iconX} ${iconY})`} pointerEvents="none">
-                      <FontAwesomeIcon
-                        x={iconX - 12.5}
-                        y={iconY - 17.5}
-                        icon={item.icon}
-                        width={25}
-                        height={25}
-                        fixedWidth
-                        className={classes.content}
+                      <Icon 
+                        icon={item.icon} 
+                        x={iconX - 12.5} 
+                        y={iconY - 17.5} 
+                        width={25} 
+                        height={25} 
+                        // @ts-ignore
+                        iconClass={classes.content}
+                        insideSVG={true} 
                       />
                       <text x={iconX} y={iconY + 25} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
                         {item.label}

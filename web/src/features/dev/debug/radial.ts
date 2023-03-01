@@ -7,7 +7,8 @@ export const debugRadial = () => {
       action: 'openRadialMenu',
       data: {
         items: [
-          { icon: 'palette', label: 'Paint' },
+          { icon: 'https://cdn4.iconfinder.com/data/icons/social-media-logos-6/512/12-vlc_media_player-512.png', label: 'Pet' },
+          { icon: 'https://i.imgur.com/uO3oARr.png', label: 'Paint' },
           { icon: 'warehouse', label: 'Garage' },
           { icon: 'palette', label: 'Quite long text' },
           { icon: 'building-shield', label: 'Police' },
@@ -15,7 +16,6 @@ export const debugRadial = () => {
           { icon: 'house', label: 'House' },
           { icon: 'car', label: 'Car' },
           { icon: 'users', label: 'Players' },
-          { icon: 'paw', label: 'Pet' },
         ],
       },
     },
