@@ -255,6 +255,7 @@ local function debugPoly(self)
         DrawPoly(c.x, c.y, c.z, b.x, b.y, b.z, a.x, a.y, a.z, 255, 42, 24, 100)
         DrawPoly(b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, 255, 42, 24, 100)
         DrawPoly(d.x, d.y, d.z, c.x, c.y, c.z, b.x, b.y, b.z, 255, 42, 24, 100)
+        DrawText3D(a.x, a.y, a.z, "Index: "..i)
     end
 end
 
