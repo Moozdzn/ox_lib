@@ -19,7 +19,7 @@ local menus = {}
 ---@type RadialMenuItem[]
 local menuItems = {}
 
----@type string[]
+---@type table<{id: string, option: string}>
 local menuHistory = {}
 
 ---@type RadialMenuProps?
@@ -27,7 +27,8 @@ local currentRadial = nil
 
 ---Open a the global radial menu or a registered radial submenu with the given id.
 ---@param id string?
-local function showRadial(id)
+---@param option number?
+local function showRadial(id, option)
     local radial = id and menus[id]
 
     if id and not radial then
@@ -51,7 +52,8 @@ local function showRadial(id)
         action = 'openRadialMenu',
         data = {
             items = radial and radial.items or menuItems,
-            sub = radial and true or nil
+            sub = radial and true or nil,
+            option = option
         }
     })
 end
@@ -65,10 +67,10 @@ local function refreshRadial(menuId)
             return showRadial(menuId)
         else
             for i = 1, #menuHistory do
-                local subMenuId = menuHistory[i]
+                local subMenu = menuHistory[i]
 
-                if subMenuId == menuId then
-                    local parent = menus[subMenuId]
+                if subMenu.id == menuId then
+                    local parent = menus[subMenu.id]
 
                     for j = 1, #parent.items do
                         -- If we still have a path to the current submenu, refresh instead of returning
@@ -119,6 +121,7 @@ function lib.hideRadial()
     })
 
     SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
     table.wipe(menuHistory)
 
     isOpen = false
@@ -131,16 +134,28 @@ function lib.addRadialItem(items)
     local menuSize = #menuItems
     local invokingResource = GetInvokingResource()
 
-    if table.type(items) == 'array' then
-        for i = 1, #items do
-            local item = items[i]
-            item.resource = invokingResource
+    items = table.type(items) == 'array' and items or { items }
+
+    for i = 1, #items do
+        local item = items[i]
+        item.resource = invokingResource
+
+        if menuSize == 0 then
             menuSize += 1
             menuItems[menuSize] = item
+        else
+            for j = 1, menuSize do
+                if menuItems[j].id == item.id then
+                    menuItems[j] = item
+                    break
+                end
+
+                if j == menuSize then
+                    menuSize += 1
+                    menuItems[menuSize] = item
+                end
+            end
         end
-    else
-        items.resource = invokingResource
-        menuItems[menuSize + 1] = items
     end
 
     if isOpen and not currentRadial then
@@ -180,11 +195,10 @@ RegisterNUICallback('radialClick', function(index, cb)
         item = menuItems[itemIndex]
     end
 
-    if item.menu then
-        if currentRadial then
-            menuHistory[#menuHistory + 1] = currentRadial.id
-        end
+    local menuResource = currentRadial and currentRadial.resource or item.resource
 
+    if item.menu then
+        menuHistory[#menuHistory + 1] = { id = currentRadial and currentRadial.id, option = item.menu }
         showRadial(item.menu)
     else
         lib.hideRadial()
@@ -194,7 +208,7 @@ RegisterNUICallback('radialClick', function(index, cb)
 
     if onSelect then
         if type(onSelect) == 'string' then
-            return exports[currentRadial and currentRadial.resource or item.resource][onSelect](0, currentMenu, itemIndex)
+            return exports[menuResource][onSelect](0, currentMenu, itemIndex)
         end
 
         onSelect(currentMenu, itemIndex)
@@ -207,9 +221,12 @@ RegisterNUICallback('radialBack', function(_, cb)
     local numHistory = #menuHistory
     local lastMenu = numHistory > 0 and menuHistory[numHistory]
 
-    if lastMenu then
-        menuHistory[numHistory] = nil
-        return showRadial(lastMenu)
+    if not lastMenu then return end
+
+    menuHistory[numHistory] = nil
+
+    if lastMenu.id then
+        return showRadial(lastMenu.id, lastMenu.option)
     end
 
     currentRadial = nil
@@ -228,7 +245,8 @@ RegisterNUICallback('radialBack', function(_, cb)
     SendNUIMessage({
         action = 'openRadialMenu',
         data = {
-            items = menuItems
+            items = menuItems,
+            option = lastMenu.option
         }
     })
 end)
@@ -253,11 +271,25 @@ RegisterNUICallback('radialTransition', function(_, cb)
     cb(true)
 end)
 
+local isDisabled = false
+
+---Disallow players from opening the radial menu.
+---@param state boolean
+function lib.disableRadial(state)
+    isDisabled = state
+
+    if isOpen and state then
+        return lib.hideRadial()
+    end
+end
+
 lib.addKeybind({
     name = 'ox_lib-radial',
     description = 'Open radial menu',
     defaultKey = 'z',
     onPressed = function()
+        if isDisabled then return end
+
         if isOpen then
             return lib.hideRadial()
         end
