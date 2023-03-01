@@ -17,13 +17,14 @@ const useStyles = createStyles((theme) => ({
     transform: 'translate(-50%, -50%)',
   },
   sector: {
-    fill: theme.colors.dark[6],
-    fillOpacity: 0.3,
-    color: theme.colors.dark[0],
+    fill: theme.colors.dark[9],
+    fillOpacity: 0.0,
+    color: '#fff',
 
     '&:hover': {
       fill: theme.fn.primaryColor(),
-      fillOpacity: 0.6,
+      fillOpacity: 0.8,
+      /* fillOpacity: 0.6, */
       '> g > text, > g > svg > path': {
         fill: '#fff',
       },
@@ -32,18 +33,18 @@ const useStyles = createStyles((theme) => ({
     },
   },
   content: {
-    fill: theme.colors.dark[0],
+    fill: '#fff',
     fillOpacity: 1
   },
   backgroundCircle: {
-    fill: theme.colors.dark[6],
-    fillOpacity: 0.4,
+    fill: theme.colors.dark[9],
+    fillOpacity: 0.2,
   },
   centerCircle: {
     fill: theme.fn.primaryColor(),
     color: '#fff',
-    stroke: theme.colors.dark[6],
-    strokeOpacity: 0.4,
+    stroke: theme.colors.dark[9],
+    strokeOpacity: 0.0,
     strokeWidth: 4,
     '&:hover': {
       fill: theme.colors[theme.primaryColor][theme.fn.primaryShade() - 1],
@@ -63,6 +64,9 @@ const useStyles = createStyles((theme) => ({
 
 // PAGE_ITEMS + 1 = More... button
 const PAGE_ITEMS = 5;
+const RADIAL_SIZE = 250
+
+const calculateSize = (value: number) => (value * RADIAL_SIZE) / 175
 
 const degToRad = (deg: number) => deg * (Math.PI / 180);
 
@@ -120,26 +124,26 @@ const RadialMenu: React.FC = () => {
         }}
       >
         <ScaleFade visible={visible}>
-          <svg width="350px" height="350px" transform="rotate(90)">
+          <svg width={RADIAL_SIZE * 2} height={RADIAL_SIZE * 2} transform="rotate(90)">
             {/*Fixed issues with background circle extending the circle when there's less than 3 items*/}
-            <g transform="translate(175, 175)">
-              <circle r={175} className={classes.backgroundCircle} />
+            <g transform={`translate(${RADIAL_SIZE}, ${RADIAL_SIZE})`}>
+              <circle r={RADIAL_SIZE} className={classes.backgroundCircle} />
             </g>
             {menuItems.map((item, index) => {
               // Always draw full circle to avoid elipse circles with 2 or less items
               const pieAngle = 360 / (menuItems.length < 3 ? 3 : menuItems.length);
               const angle = degToRad(pieAngle / 2 + 90);
               const gap = 0;
-              const radius = 175 * 0.65 - gap;
+              const radius = RADIAL_SIZE * 0.65 - gap;
               const sinAngle = Math.sin(angle);
               const cosAngle = Math.cos(angle);
-              const iconX = 175 + sinAngle * radius;
-              const iconY = 175 + cosAngle * radius;
+              const iconX = RADIAL_SIZE + sinAngle * radius;
+              const iconY = RADIAL_SIZE + cosAngle * radius;
 
               return (
                 <>
                   <g
-                    transform={`rotate(-${index * pieAngle} 175 175) translate(${sinAngle * gap}, ${cosAngle * gap})`}
+                    transform={`rotate(-${index * pieAngle} ${RADIAL_SIZE} ${RADIAL_SIZE}) translate(${sinAngle * gap}, ${cosAngle * gap})`}
                     className={classes.sector}
                     onClick={async () => {
                       const clickIndex = menu.page === 1 ? index : PAGE_ITEMS * (menu.page - 1) + index;
@@ -150,22 +154,23 @@ const RadialMenu: React.FC = () => {
                     }}
                   >
                     <path
-                      d={`M175.01,175.01 l${175 - gap},0 A175.01,175.01 0 0,0 ${
-                        175 + (175 - gap) * Math.cos(-degToRad(pieAngle))
-                      }, ${175 + (175 - gap) * Math.sin(-degToRad(pieAngle))} z`}
+                      d={`M${RADIAL_SIZE}.01,${RADIAL_SIZE}.01 l${RADIAL_SIZE - gap},0 A${RADIAL_SIZE}.01,${RADIAL_SIZE}.01 0 0,0 ${
+                        RADIAL_SIZE + (RADIAL_SIZE - gap) * Math.cos(-degToRad(pieAngle))
+                      }, ${RADIAL_SIZE + (RADIAL_SIZE - gap) * Math.sin(-degToRad(pieAngle))} z`}
                     />
                     <g transform={`rotate(${index * pieAngle - 90} ${iconX} ${iconY})`} pointerEvents="none">
                       <Icon 
                         icon={item.icon} 
-                        x={iconX - 12.5} 
-                        y={iconY - 17.5} 
-                        width={25} 
-                        height={25} 
+                        x={iconX - calculateSize(12.5)} 
+                        y={iconY - calculateSize(17.5)} 
+                        width={calculateSize(25)} 
+                        height={calculateSize(25)} 
                         // @ts-ignore
                         iconClass={classes.content}
+                        color="#fff"
                         insideSVG={true} 
                       />
-                      <text x={iconX} y={iconY + 25} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
+                      <text x={iconX} y={iconY + calculateSize(25)} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
                         {item.label}
                       </text>
                     </g>
@@ -174,7 +179,7 @@ const RadialMenu: React.FC = () => {
               );
             })}
             <g
-              transform={`translate(175, 175)`}
+              transform={`translate(${RADIAL_SIZE}, ${RADIAL_SIZE})`}
               onClick={async () => {
                 if (menu.page > 1) await changePage();
                 else {
@@ -186,7 +191,7 @@ const RadialMenu: React.FC = () => {
                 }
               }}
             >
-              <circle r={32} className={classes.centerCircle} />
+              <circle r={calculateSize(32)} className={classes.centerCircle} />
             </g>
           </svg>
           <div className={classes.centerIconContainer}>

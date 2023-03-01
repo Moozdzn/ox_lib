@@ -41,13 +41,16 @@ const Icon: React.FC<{
         )
     }
 
+    const width = Math.floor((props.width || 1) * 1.4);
+    const height = Math.floor((props.height || 1) * 1.4);
+
     return (
         props.insideSVG ? (
             <image 
                 xlinkHref={props.icon as string} 
                 className={props.imageClass}
-                width={props.width} 
-                height={props.height} 
+                width={width} 
+                height={height} 
                 x={props.x} 
                 y={props.y}  
             />
