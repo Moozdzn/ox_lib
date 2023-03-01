@@ -3,9 +3,9 @@ import { isIconUrl } from '../utils/isIconUrl';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { createStyles } from '@mantine/core';
 
-const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
+const useStyles = createStyles((theme, params: { iconColor?: string, svg?: boolean }) => ({
     icon: {
-      color: params.iconColor || theme.colors.dark[2],
+      color: params.iconColor || theme.colors.dark[params.svg ? 0 : 2],
     },
   }));
 
@@ -22,7 +22,7 @@ const Icon: React.FC<{
     imageClass?: string;
 }> = (props) => {
 
-    const { classes } = useStyles({ iconColor: props.color });
+    const { classes } = useStyles({ iconColor: props.color, svg: props.insideSVG });
 
     const isUrl = typeof props.icon === 'string' && isIconUrl(props.icon)
 

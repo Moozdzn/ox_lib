@@ -62,7 +62,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 // PAGE_ITEMS + 1 = More... button
-const PAGE_ITEMS = 7;
+const PAGE_ITEMS = 5;
 
 const degToRad = (deg: number) => deg * (Math.PI / 180);
 
