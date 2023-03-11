@@ -40,11 +40,23 @@ export class Point<T = unknown> {
   }
 
   remove = () => {
+    const coords = Vector3.fromArray(GetEntityCoords(cache.ped, false));
+    const distance = coords.distance(this.coords);
+    if (distance < this.distance) {
+      nearbyCount -= 1;
+      nearbyPoints = nearbyPoints.filter((point) => point.id !== this.id);
+      if (nearbyCount === 0 && tick) {
+        clearTick(tick);
+        tick = undefined;
+      }
+    }
     points = points.filter((point) => point.id !== this.id);
   };
 }
 
 setInterval(() => {
+  if (points.length < 1) return;
+
   if (nearbyCount !== 0) {
     nearbyPoints = [];
     nearbyCount = 0;
