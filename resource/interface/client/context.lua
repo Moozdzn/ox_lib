@@ -100,13 +100,13 @@ RegisterNUICallback('clickContext', function(id, cb)
 
     lib.resetNuiFocus()
     
-    if data.onSelect then data.onSelect(data.args) end
-    if data.event then TriggerEvent(data.event, data.args) end
-    if data.serverEvent then TriggerServerEvent(data.serverEvent, data.args) end
-
     SendNUIMessage({
         action = 'hideContext'
     })
+
+    if data.onSelect then data.onSelect(data.args) end
+    if data.event then TriggerEvent(data.event, data.args) end
+    if data.serverEvent then TriggerServerEvent(data.serverEvent, data.args) end
 end)
 
 RegisterNUICallback('closeContext', closeContext)
