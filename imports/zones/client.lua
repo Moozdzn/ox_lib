@@ -12,7 +12,7 @@ local debug = false
 ---@field inside fun(self: CZone)?
 ---@field [string] any
 
----@type { [number]: CZone }
+---@type table<number, CZone>
 Zones = {}
 
 local function DrawText3D(x, y, z, text)
@@ -106,8 +106,11 @@ local function getTriangles(polygon)
     return triangles
 end
 
+---@type table<number, CZone>
 local insideZones = {}
+---@type table<number, CZone>
 local enteringZones = {}
+---@type table<number, CZone>
 local exitingZones = {}
 local enteringSize = 0
 local exitingSize = 0
@@ -260,6 +263,7 @@ local function debugPoly(self)
 end
 
 local function debugSphere(self)
+    ---@diagnostic disable-next-line: param-type-mismatch
     DrawMarker(28, self.coords.x, self.coords.y, self.coords.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.radius, self.radius, self.radius, 255, 42, 24, 100, false, false, 0, false, false, false, false)
 end
 
@@ -428,7 +432,10 @@ lib.zones = {
 
     debug = function ()
         debug = not debug
-    end
+    end,
+    getAllZones = function() return Zones end,
+
+    getCurrentZones = function() return insideZones end,
 }
 
 AddEventHandler('polyzone:debug', function ()
