@@ -10,6 +10,8 @@ if cache.game == 'redm' then return end
 ---@field fuelLevel? number
 ---@field oilLevel? number
 ---@field dirtLevel? number
+---@field color1_type? number | number[]
+---@field color2_type? number | number[]
 ---@field color1? number | number[]
 ---@field color2? number | number[]
 ---@field pearlescentColor? number
@@ -76,6 +78,7 @@ if cache.game == 'redm' then return end
 ---@field modWindows? number
 ---@field modDoorR? number
 ---@field modLivery? number
+---@field livery? number
 ---@field modRoofLivery? number
 ---@field modLightbar? number
 ---@field windows? number[]
@@ -117,11 +120,7 @@ function lib.getVehicleProperties(vehicle)
             end
         end
 
-        local modLivery = GetVehicleLivery(vehicle)
-
-        if modLivery == -1 then
-            modLivery = GetVehicleMod(vehicle, 48)
-        end
+        local modLivery = GetVehicleMod(vehicle, 48)
 
         local damage = {
             windows = {},
@@ -171,6 +170,8 @@ function lib.getVehicleProperties(vehicle)
             dirtLevel = math.floor(GetVehicleDirtLevel(vehicle) + 0.5),
             color1 = colorPrimary,
             color2 = colorSecondary,
+            color1_type = GetVehicleModColor_1(vehicle),
+            color2_type = GetVehicleModColor_2(vehicle),
             pearlescentColor = pearlescentColor,
             interiorColor = GetVehicleInteriorColor(vehicle),
             dashboardColor = GetVehicleDashboardColour(vehicle),
@@ -235,6 +236,7 @@ function lib.getVehicleProperties(vehicle)
             modWindows = GetVehicleMod(vehicle, 46),
             modDoorR = GetVehicleMod(vehicle, 47),
             modLivery = modLivery,
+            livery = GetVehicleLivery(vehicle),
             modRoofLivery = GetVehicleRoofLivery(vehicle),
             modLightbar = GetVehicleMod(vehicle, 49),
             windows = damage.windows,
@@ -265,6 +267,14 @@ function lib.setVehicleProperties(vehicle, props)
 
     SetVehicleModKit(vehicle, 0)
     SetVehicleAutoRepairDisabled(vehicle, true)
+
+    if props.extras then
+        for id, state in pairs(props.extras) do
+            SetVehicleExtra(vehicle, id, state)
+        end
+    end
+
+    SetVehicleFixed(vehicle)
 
     if props.plate then
         SetVehicleNumberPlateText(vehicle, props.plate)
@@ -314,6 +324,14 @@ function lib.setVehicleProperties(vehicle, props)
         end
     end
 
+    if props.color1_type then
+        SetVehicleModColor_1(vehicle, props.color1_type)
+    end
+
+    if props.color2_type then
+        SetVehicleModColor_2(vehicle, props.color2_type)
+    end
+
     if props.pearlescentColor or props.wheelColor then
         SetVehicleExtraColours(vehicle, props.pearlescentColor or pearlescentColor, props.wheelColor or wheelColor)
     end
@@ -345,34 +363,6 @@ function lib.setVehicleProperties(vehicle, props)
     if props.neonEnabled then
         for i = 1, #props.neonEnabled do
             SetVehicleNeonLightEnabled(vehicle, i - 1, props.neonEnabled[i])
-        end
-    end
-
-    if props.extras then
-        for id, state in pairs(props.extras) do
-            SetVehicleExtra(vehicle, id, state)
-        end
-    end
-
-    if props.windows then
-        for i = 1, #props.windows do
-            SmashVehicleWindow(vehicle, props.windows[i])
-        end
-    end
-
-    if props.doors then
-        for i = 1, #props.doors do
-            SetVehicleDoorBroken(vehicle, props.doors[i], true)
-        end
-    end
-
-    if props.tyres then
-        for tyre, state in pairs(props.tyres) do
-            if state == 1 then
-                SetVehicleTyreBurst(vehicle, tyre, false, 1000.0)
-            else
-                SetVehicleTyreBurst(vehicle, tyre, true, 1000.0)
-            end
         end
     end
 
@@ -580,9 +570,14 @@ function lib.setVehicleProperties(vehicle, props)
         SetVehicleMod(vehicle, 47, props.modDoorR, false)
     end
 
+    SetVehicleLivery(vehicle, 0)
+
     if props.modLivery then
         SetVehicleMod(vehicle, 48, props.modLivery, false)
-        SetVehicleLivery(vehicle, props.modLivery)
+    end
+
+    if props.livery then
+        SetVehicleLivery(vehicle, props.livery)
     end
 
     if props.modRoofLivery then
@@ -591,6 +586,29 @@ function lib.setVehicleProperties(vehicle, props)
 
     if props.modLightbar then
         SetVehicleMod(vehicle, 49, props.modLightbar, false)
+    end
+
+    if props.windows then
+        for i = 1, #props.windows do
+            SmashVehicleWindow(vehicle, props.windows[i])
+        end
+    end
+
+    if props.doors then
+        for i = 1, #props.doors do
+            SetVehicleDoorBroken(vehicle, props.doors[i], true)
+        end
+    end
+
+    if props.tyres then
+        for tyre, state in pairs(props.tyres) do
+            tyre = tonumber(tyre) --[[ @as number ]]
+            if state == 1 then
+                SetVehicleTyreBurst(vehicle, tyre, false, 1000.0)
+            else
+                SetVehicleTyreBurst(vehicle, tyre, true, 1000.0)
+            end
+        end
     end
 
     return true
