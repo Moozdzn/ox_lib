@@ -171,8 +171,11 @@ const RadialMenu: React.FC = () => {
                         color="#fff"
                         insideSVG={true} 
                       />
-                      <text x={iconX} y={iconY + calculateSize(25)} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
-                        {item.label}
+                      <text x={iconX} y={iconY + (item.label.includes("  \n") ? 7 : 25)} fill="#fff" textAnchor="middle" pointerEvents="none" className={classes.content}>
+                        {item.label.includes("  \n")
+                          ? item.label.split("  \n").map((value) => <tspan x={iconX} dy="1.2em">{value}</tspan>)
+                          : item.label
+                        }
                       </text>
                     </g>
                   </g>
