@@ -25,7 +25,7 @@ if cache.game == 'redm' then return end
 ---@field xenonColor? number
 ---@field neonEnabled? boolean[]
 ---@field neonColor? number | number[]
----@field extras? boolean[]
+---@field extras? table<number | string, 0 | 1>
 ---@field tyreSmokeColor? number | number[]
 ---@field modSpoilers? number
 ---@field modFrontBumper? number
@@ -83,7 +83,8 @@ if cache.game == 'redm' then return end
 ---@field modLightbar? number
 ---@field windows? number[]
 ---@field doors? number[]
----@field tyres? number[]
+---@field tyres? table<number | string, 1 | 2>
+---@field bulletProofTyres? boolean
 
 RegisterNetEvent('ox_lib:setVehicleProperties', function(netid, data)
     local timeout = 100
@@ -146,7 +147,7 @@ function lib.getVehicleProperties(vehicle)
             end
         end
 
-        for i = 0, 5 do
+        for i = 0, 7 do
             if IsVehicleTyreBurst(vehicle, i, false) then
                 damage.tyres[i] = IsVehicleTyreBurst(vehicle, i, true) and 2 or 1
             end
@@ -242,6 +243,7 @@ function lib.getVehicleProperties(vehicle)
             windows = damage.windows,
             doors = damage.doors,
             tyres = damage.tyres,
+            bulletProofTyres = GetVehicleTyresCanBurst(vehicle),
             -- no setters?
             -- leftHeadlight = GetIsLeftVehicleHeadlightDamaged(vehicle),
             -- rightHeadlight = GetIsRightVehicleHeadlightDamaged(vehicle),
@@ -258,6 +260,7 @@ function lib.setVehicleProperties(vehicle, props)
     if not DoesEntityExist(vehicle) then error(("Unable to set vehicle properties for '%s' (entity does not exist)"):
             format(vehicle))
     end
+
     if NetworkGetEntityIsNetworked(vehicle) and NetworkGetEntityOwner(vehicle) ~= cache.playerId then error((
             "Unable to set vehicle properties for '%s' (client is not entity owner)"):format(vehicle))
     end
@@ -363,6 +366,30 @@ function lib.setVehicleProperties(vehicle, props)
     if props.neonEnabled then
         for i = 1, #props.neonEnabled do
             SetVehicleNeonLightEnabled(vehicle, i - 1, props.neonEnabled[i])
+        end
+    end
+
+    if props.extras then
+        for id, disable in pairs(props.extras) do
+            SetVehicleExtra(vehicle, tonumber(id) --[[@as number]], disable == 1)
+        end
+    end
+
+    if props.windows then
+        for i = 1, #props.windows do
+            SmashVehicleWindow(vehicle, props.windows[i])
+        end
+    end
+
+    if props.doors then
+        for i = 1, #props.doors do
+            SetVehicleDoorBroken(vehicle, props.doors[i], true)
+        end
+    end
+
+    if props.tyres then
+        for tyre, state in pairs(props.tyres) do
+            SetVehicleTyreBurst(vehicle, tonumber(tyre) --[[@as number]], state == 2, 1000.0)
         end
     end
 
@@ -588,27 +615,8 @@ function lib.setVehicleProperties(vehicle, props)
         SetVehicleMod(vehicle, 49, props.modLightbar, false)
     end
 
-    if props.windows then
-        for i = 1, #props.windows do
-            SmashVehicleWindow(vehicle, props.windows[i])
-        end
-    end
-
-    if props.doors then
-        for i = 1, #props.doors do
-            SetVehicleDoorBroken(vehicle, props.doors[i], true)
-        end
-    end
-
-    if props.tyres then
-        for tyre, state in pairs(props.tyres) do
-            tyre = tonumber(tyre) --[[ @as number ]]
-            if state == 1 then
-                SetVehicleTyreBurst(vehicle, tyre, false, 1000.0)
-            else
-                SetVehicleTyreBurst(vehicle, tyre, true, 1000.0)
-            end
-        end
+    if props.bulletProofTyres ~= nil then
+        SetVehicleTyresCanBurst(vehicle, props.bulletProofTyres)
     end
 
     return true
